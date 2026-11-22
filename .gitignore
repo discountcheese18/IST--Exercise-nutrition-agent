@@ -1,0 +1,26 @@
+# Python environments
+venv/
+__pycache__/
+*.pyc
+
+# Frontend dependencies
+node_modules/
+dist/
+
+# Editor settings
+.vscode/
+
+# Unused folders
+SAM/
+exercise-nutrition-agent/
+
+# Old backend files
+mainold.py
+insights_engineold.py
+
+# Environment files, except the backend key
+.env
+!backend/.env
+
+Appold.jsx
+Appold.css
