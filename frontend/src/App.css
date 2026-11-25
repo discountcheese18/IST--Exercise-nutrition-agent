@@ -1,3 +1,8 @@
+/* Styles for the Exercise and Nutrition Agent interface.
+   Selectors determine which elements receive each rule.
+   Responsive @media rules adjust the layout for smaller screens.
+   Colors, spacing, and typography can be customized here. */
+
 .app-shell { min-height: 100vh; display: grid; grid-template-columns: 250px 1fr; }
 .sidebar { position: sticky; top: 0; height: 100vh; padding: 28px 20px; background: linear-gradient(180deg, var(--navy), #101c2f); color: #fff; display: flex; flex-direction: column; }
 .brand { display: flex; gap: 12px; align-items: center; margin-bottom: 36px; }
@@ -108,6 +113,7 @@ textarea { resize: vertical; min-height: 105px; }
 
 
 /* --- Light wellness visual polish --- */
+/* Style group: .page-heading h3. Adjust the rules below to change its appearance. */
 .page-heading h3 {
   display: flex;
   align-items: center;
@@ -135,6 +141,7 @@ textarea { resize: vertical; min-height: 105px; }
   transform: translateY(-3px);
   box-shadow: 0 10px 24px rgba(15, 23, 42, .08);
 }
+/* Style group: .btn. Adjust the rules below to change its appearance. */
 .btn {
   transition: transform .16s ease, box-shadow .16s ease, opacity .16s ease;
 }
@@ -151,6 +158,7 @@ textarea { resize: vertical; min-height: 105px; }
   animation: progress-grow .7s ease-out both;
   transform-origin: left;
 }
+/* Style group: .status-dot. Adjust the rules below to change its appearance. */
 .status-dot {
   animation: status-pulse 2s ease-in-out infinite;
 }
@@ -186,6 +194,7 @@ textarea { resize: vertical; min-height: 105px; }
   opacity: .9;
   pointer-events: none;
 }
+/* Style group: .wellness-doodles span. Adjust the rules below to change its appearance. */
 .wellness-doodles span {
   font-size: 22px;
   animation: gentle-float 4s ease-in-out infinite;
@@ -248,6 +257,7 @@ textarea { resize: vertical; min-height: 105px; }
   z-index: 3;
 }
 
+/* Style group: .health-logo. Adjust the rules below to change its appearance. */
 .health-logo {
   position: relative;
   overflow: hidden;
@@ -305,6 +315,7 @@ textarea { resize: vertical; min-height: 105px; }
   );
 }
 
+/* Style group: .sidebar-art::after. Adjust the rules below to change its appearance. */
 .sidebar-art::after {
   content: "";
   position: absolute;
@@ -360,6 +371,7 @@ textarea { resize: vertical; min-height: 105px; }
 }
 
 /* The first leaf itself is hidden; its pseudo-element is used as the plant stem. */
+/* Style group: .leaf-one. Adjust the rules below to change its appearance. */
 .leaf-one {
   left: 21px;
   bottom: 132px;
@@ -405,6 +417,7 @@ textarea { resize: vertical; min-height: 105px; }
   animation: sidebar-drift 5.5s ease-in-out infinite;
 }
 
+/* Style group: .dot-one. Adjust the rules below to change its appearance. */
 .dot-one {
   width: 6px;
   height: 6px;
@@ -458,6 +471,7 @@ textarea { resize: vertical; min-height: 105px; }
   background: #fff;
 }
 
+/* Style group: .health-guidance-title. Adjust the rules below to change its appearance. */
 .health-guidance-title {
   display: flex;
   align-items: center;
@@ -493,6 +507,7 @@ textarea { resize: vertical; min-height: 105px; }
   max-width: 850px;
 }
 
+/* Style group: .health-guidance-heading. Adjust the rules below to change its appearance. */
 .health-guidance-heading {
   margin: 22px 0 9px;
   font-size: 16px;
@@ -522,6 +537,7 @@ textarea { resize: vertical; min-height: 105px; }
 }
 
 /* Clear, readable AI Coach responses */
+/* Style group: .message.agent. Adjust the rules below to change its appearance. */
 .message.agent {
   padding: 18px 20px;
 }
@@ -549,6 +565,7 @@ textarea { resize: vertical; min-height: 105px; }
   border-top: 0;
 }
 
+/* Style group: .message.agent .health-guidance-paragraph. Adjust the rules below to change its appearance. */
 .message.agent .health-guidance-paragraph {
   margin-bottom: 10px;
   line-height: 1.7;
@@ -588,6 +605,7 @@ textarea { resize: vertical; min-height: 105px; }
   background: linear-gradient(115deg, #1b3c38, #6f9b81);
   box-shadow: 0 8px 25px rgba(23, 50, 46, .11);
 }
+/* Style group: .wellness-photo-banner img. Adjust the rules below to change its appearance. */
 .wellness-photo-banner img {
   width: 100%; height: 100%; object-fit: cover; display: block;
 }
@@ -635,6 +653,7 @@ textarea { resize: vertical; min-height: 105px; }
 }
 
 /* Chrome and Edge */
+/* Style group: .sleep-hours-slider::-webkit-slider-runnable-track. Adjust the rules below to change its appearance. */
 .sleep-hours-slider::-webkit-slider-runnable-track {
   height: 14px;
   border-radius: 999px;
@@ -675,6 +694,7 @@ textarea { resize: vertical; min-height: 105px; }
   min-height: 46px;
   align-self: start;
 }
+/* Style group: .sleep-save-confirmation. Adjust the rules below to change its appearance. */
 .sleep-save-confirmation {
   display: flex;
   align-items: center;
@@ -708,6 +728,7 @@ textarea { resize: vertical; min-height: 105px; }
   isolation: isolate;
 }
 
+/* Style group: .main > *. Adjust the rules below to change its appearance. */
 .main > * {
   position: relative;
   z-index: 2;
@@ -781,6 +802,7 @@ textarea { resize: vertical; min-height: 105px; }
   padding-top: 30px;
   background: linear-gradient(118deg, #fff 0%, #fff 66%, rgba(var(--accent-rgb), .045) 100%);
 }
+/* Style group: .decorative-card::before. Adjust the rules below to change its appearance. */
 .decorative-card::before {
   content: "";
   position: absolute;
@@ -831,6 +853,7 @@ textarea { resize: vertical; min-height: 105px; }
 }
 .decorative-card .field input:focus,
 .decorative-card .field select:focus,
+/* Style group: .decorative-card .field textarea:focus. Adjust the rules below to change its appearance. */
 .decorative-card .field textarea:focus {
   background-color: #fff;
   border-color: rgba(var(--accent-rgb), .65);
@@ -846,31 +869,6 @@ textarea { resize: vertical; min-height: 105px; }
   .decorative-card::after { width: 44px; height: 44px; right: 18px; }
 }
 
-
-/* AI Face Aging */
-.decor-aging { --accent-rgb: 145, 108, 169; }
-.aging-controls { display:grid; grid-template-columns: minmax(210px, 1fr) minmax(240px, 1.2fr); gap:24px; align-items:stretch; margin-top:18px; }
-.aging-upload-area { position:relative; }
-.aging-upload-label { min-height:196px; padding:25px 16px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:8px; text-align:center; border:2px dashed #c7d6d1; background:#f8fbfa; border-radius:16px; cursor:pointer; transition:background .2s,border-color .2s; }
-.aging-upload-label:hover, .aging-upload-label:focus-within { background:#f0f8f4; border-color:#4b9c7c; }
-.aging-upload-label strong { font-size:16px; color:#244c40; }
-.aging-upload-label span:last-child { font-size:12px; color:#788a86; }
-.aging-upload-icon { font-size:35px; }
-.aging-file-input { position:absolute; width:1px; height:1px; opacity:0; }
-.aging-age-control { display:flex; flex-direction:column; justify-content:center; gap:16px; padding:8px 0; }
-.aging-age-control label { display:flex; justify-content:space-between; gap:12px; font-size:15px; font-weight:600; color:#2d4c44; }
-.aging-age-control label strong { color:#268560; font-size:20px; }
-.aging-age-control input[type="range"] { width:100%; accent-color:#389b75; cursor:pointer; }
-.aging-range-labels { display:flex; justify-content:space-between; color:#86938e; font-size:12px; margin-top:-12px; }
-.aging-generate-btn { align-self:flex-start; }
-.aging-comparison { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:20px; margin-top:26px; }
-.aging-portrait { display:flex; flex-direction:column; gap:10px; }
-.aging-portrait > span { font-weight:700; font-size:14px; color:#37574d; }
-.aging-portrait img { width:100%; max-height:420px; object-fit:contain; background:#f2f5f3; border-radius:14px; border:1px solid #e2e9e5; }
-.aging-download { display:inline-flex; margin-top:18px; text-decoration:none; }
-.aging-caption { margin-top:18px; font-size:12px; color:#83928b; line-height:1.5; }
-.aging-error { margin-top:14px; color:#9a3434; }
-@media(max-width:700px) { .aging-controls { grid-template-columns:1fr; } .aging-comparison { gap:10px; } }
 
 /* Personalized Insights */
 .insights-intro { background: linear-gradient(115deg, #fff 58%, #edf8f2); }

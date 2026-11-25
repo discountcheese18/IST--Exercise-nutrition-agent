@@ -1,8 +1,7 @@
-"""Evidence-linked, conservative personalized insights for the Exercise and Nutrition Agent.
+# Insight selection engine: creates profile-specific, research-informed suggestion cards.
+# Curated rules generate candidate insights; AI can rank those candidates when available.
 
-This first version uses a curated knowledge base and optional Gemini ranking.
-It does not perform live literature retrieval or verify individual research papers.
-"""
+"""Generate profile-based insights from curated health references."""
 import json
 import re
 from typing import Any
@@ -33,6 +32,7 @@ SOURCES = {
 }
 
 
+# Function: has positive entry. Handles the corresponding request or processing step.
 def has_positive_entry(value: Any) -> bool:
     """True only for a meaningful affirmative free-text entry."""
     if value is None or isinstance(value, bool):
@@ -52,6 +52,7 @@ def has_positive_entry(value: Any) -> bool:
     return normalized not in negative
 
 
+# Function: mentioned condition. Handles the corresponding request or processing step.
 def mentioned_condition(text: str, terms: tuple[str, ...]) -> bool:
     """Conservative matching; avoids treating common negated statements as diagnoses."""
     for term in terms:
@@ -67,6 +68,7 @@ def mentioned_condition(text: str, terms: tuple[str, ...]) -> bool:
     return False
 
 
+# Processing helper: generate candidates. Keeps this logic reusable across API requests.
 def generate_candidates(profile: Any) -> list[dict]:
     def value(name):
         return getattr(profile, name, None)
@@ -111,7 +113,6 @@ def generate_candidates(profile: Any) -> list[dict]:
 
     # Genetic-condition considerations are triggered ONLY by a user's current
     # Medical Conditions field, never by family history or past conditions.
-    # The rules surface discussion topics, not diagnoses or treatment plans.
     genetic_text = " ".join(text(f) for f in ("medical_conditions", "dietary_health_conditions")
                             if has_positive_entry(value(f)))
     genetic_rules = [
@@ -257,7 +258,6 @@ def generate_candidates(profile: Any) -> list[dict]:
             ["Medications", "Nutrition and exercise goals"], "nutrition", 3,
             "Do not start, stop, or change medication based on this insight.")
     # Additional profile-driven connections. Today's logged intake is a single-day
-    # snapshot, not evidence of an ongoing nutritional deficit or excess.
     preference = text("dietary_preference")
     disliked = text("disliked_foods") if has_positive_entry(value("disliked_foods")) else ""
     logged_calories = number("actual_calories_today")
@@ -293,7 +293,6 @@ def generate_candidates(profile: Any) -> list[dict]:
             "Choose two or three acceptable staple foods and use them across meals. Check that any substitutions also respect your allergies.",
             ["Foods disliked", "Dietary preference"], "myplate", 2)
     if tracking and logged_protein is not None and weight_lbs and goal in {"build_muscle", "gain_weight"}:
-        # This is an observation relative to body weight, not a prescription.
         grams_per_kg = logged_protein / (weight_lbs * 0.45359237)
         if grams_per_kg < 1.0:
             add("protein_log_review", "Your logged protein is worth reviewing alongside your goal",
@@ -460,7 +459,8 @@ def generate_candidates(profile: Any) -> list[dict]:
     return sorted(items, key=lambda x: (-x["priority"], x["id"]))
 
 
-def select_insights(profile: Any, client: Any = None, model: str = "gemini-3.7-flash") -> dict:
+# Processing helper: select insights. Keeps this logic reusable across API requests.
+def select_insights(profile: Any, generate_response: Any = None) -> dict:
     candidates = generate_candidates(profile)
     # Logged food is provided to insight ranking as context; existing vetted cards remain the only sources.
     meals = getattr(profile, "meal_history", []) or []
@@ -473,14 +473,14 @@ def select_insights(profile: Any, client: Any = None, model: str = "gemini-3.7-f
     selected = candidates[:3]
     method = "curated rules"
     # AI may prioritize ONLY existing vetted cards, not invent new claims or sources.
-    if client is not None and len(candidates) > 3:
+    if generate_response is not None and len(candidates) > 3:
         try:
             choices = [{"id": c["id"], "title": c["title"], "based_on": c["based_on"], "priority": c["priority"]} for c in candidates]
             prompt = ("Choose the three most useful distinct insights for this user from the candidate list. "
                       "Use only candidate IDs. Prioritize safety-critical constraints and actionable connections. "
                       "Return only JSON like {\"ids\":[\"id1\",\"id2\",\"id3\"]}. "
                       "Do not add claims or explanations. Actual meal history is user-reported, and missing nutrition numbers are unknown. Meal history: " + json.dumps(meal_summary) + ". Candidates: " + json.dumps(choices))
-            response = client.models.generate_content(model=model, contents=prompt)
+            response = generate_response(prompt, feature="Personalized insights", json_output=True)
             raw = (response.text or "").strip()
             match = re.search(r"\{.*\}", raw, flags=re.S)
             if match:
@@ -493,8 +493,8 @@ def select_insights(profile: Any, client: Any = None, model: str = "gemini-3.7-f
                 if len(picked) == 3 and all(c["id"] != "bp_urgent" for c in candidates if c["id"] not in [x["id"] for x in picked]):
                     selected = picked
                     method = "AI-ranked curated insights"
-        except Exception:
-            pass  # An overloaded API should not break the feature.
+        except Exception as exc:
+            print(f"Personalized insights using curated rules: {type(exc).__name__}")
     for item in selected:
         item.pop("priority", None)
     return {"status": "success", "insights": selected, "method": method,

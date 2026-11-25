@@ -1,6 +1,13 @@
+// Exercise and Nutrition Agent: main React application.
+// React renders this component and updates the screen when its state changes.
+// The frontend stores some user data in the browser and sends other data to
+// the Python/FastAPI backend when calculations or AI responses are needed.
+// Comments explain the code's purpose without changing how the app works.
+
 import { useEffect, useState } from "react";
 import "./App.css";
 
+// Groups exercise equipment by type so the profile form can display organized choices.
 const equipmentCategories = {
   "Bodyweight & Calisthenics": [
     "Bodyweight / No Equipment", "Pull-Up Bar", "Dip Station", "Parallettes",
@@ -47,8 +54,10 @@ const equipmentCategories = {
   ],
 };
 
+// Flattens the equipment groups into one list for searching and selection.
 const equipmentOptions = Object.values(equipmentCategories).flat();
 
+// Defines the initial values for every profile field before the user enters information.
 const emptyProfile = {
   age: "", sex: "", height_inches: "", weight_lbs: "", goal: "", activity_level: "",
   dietary_preference: "", food_allergies: "", disliked_foods: "", liked_foods: "", diet_specifications: "", dietary_health_conditions: "", tracks_calories: false,
@@ -65,62 +74,103 @@ const emptyProfile = {
   non_hdl_cholesterol: "", a1c: "",
 };
 
+// Builds today's date in YYYY-MM-DD format using the computer's local date.
 const todayLocal = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`; };
+// Creates a fresh meal-entry object with today's date and empty nutrition fields.
 const blankMeal = () => ({ date: todayLocal(), type: "Lunch", description: "", portion: "", calories: "", protein: "" });
 
-const navItems = ["Dashboard", "Profile", "Health Records", "Health Guidance", "Nutrition", "Exercise", "Longevity", "Insights", "Network", "AI Coach"];
+// Lists the page names used to build the sidebar and mobile navigation.
+const navItems = ["Dashboard", "Profile", "Health Records", "Nutrition", "Exercise", "Longevity", "Health Guidance", "Insights", "Network", "AI Coach"];
 
+// App is the root component: it owns shared state, handlers, and the page components.
 function App() {
+  // Tracks which page is currently visible; changing it causes React to show a different page.
   const [activePage, setActivePage] = useState("Dashboard");
+  // Stores logged meals. The initializer reads saved meals from browser localStorage and falls back to an empty list.
   const [mealHistory, setMealHistory] = useState(() => {
     try { const v = JSON.parse(localStorage.getItem("mealHistory") || "[]"); return Array.isArray(v) ? v : []; }
     catch { return []; }
   });
+  // Holds the meal currently being typed or edited before it is saved.
   const [mealDraft, setMealDraft] = useState(blankMeal);
+  // Identifies the existing meal being edited; null means a new meal is being created.
   const [editingMealId, setEditingMealId] = useState(null);
+  // Stores the confirmation or status message shown after meal actions.
   const [mealNotice, setMealNotice] = useState("");
+  // Stores the selected food image as a data URL for the photo-analysis request.
   const [foodPhoto, setFoodPhoto] = useState("");
+  // Controls the loading state while Gemini analyzes a food image.
   const [foodPhotoLoading, setFoodPhotoLoading] = useState(false);
+  // Stores file-selection or photo-analysis error messages.
   const [foodPhotoWarning, setFoodPhotoWarning] = useState("");
+  // Stores the date selected when filtering previously logged meals.
   const [mealHistoryDate, setMealHistoryDate] = useState("");
+  // Stores the user's editable profile and health information.
   const [formData, setFormData] = useState(emptyProfile);
+  // Records whether the user manually changed the sleep-hours input.
   const [sleepHoursChanged, setSleepHoursChanged] = useState(false);
+  // Stores the feet portion of height while the user edits the height fields.
   const [heightFeet, setHeightFeet] = useState("");
+  // Stores the additional inches; the two height fields are converted to total inches.
   const [heightRemainderInches, setHeightRemainderInches] = useState("0");
+  // Stores feedback displayed after profile changes.
   const [profileMessage, setProfileMessage] = useState("");
+  // Stores calorie, protein, and related nutrition targets returned by the backend.
   const [nutritionTargets, setNutritionTargets] = useState(null);
+  // Indicates that nutrition targets are being requested.
   const [nutritionLoading, setNutritionLoading] = useState(false);
+  // Stores the current message typed into the AI Coach input.
   const [chatInput, setChatInput] = useState("");
+  // Stores the AI Coach conversation displayed on screen.
   const [chatMessages, setChatMessages] = useState([]);
+  // Disables or updates chat controls while waiting for an AI response.
   const [chatLoading, setChatLoading] = useState(false);
+  // Stores the text used to filter equipment options.
   const [equipmentSearch, setEquipmentSearch] = useState("");
+  // Controls whether the interface displays only chosen equipment.
   const [showSelectedEquipment, setShowSelectedEquipment] = useState(false);
+  // Tracks expanded equipment groups in the selection interface.
   const [openEquipmentCategories, setOpenEquipmentCategories] = useState(["Bodyweight & Calisthenics"]);
+  // Tracks the selected provider or network category.
   const [selectedNetwork, setSelectedNetwork] = useState(null);
+  // Stores the user's question about a health concern.
   const [healthConcern, setHealthConcern] = useState("");
+  // Stores the user's question about a medical test.
   const [healthTestQuestion, setHealthTestQuestion] = useState("");
+  // Stores the backend response for a health-concern question.
   const [healthConcernGuidance, setHealthConcernGuidance] = useState("");
+  // Stores the backend response for a test-related question.
   const [healthTestGuidance, setHealthTestGuidance] = useState("");
+  // Shows when the health-guidance request is running.
   const [healthGuidanceLoading, setHealthGuidanceLoading] = useState(false);
+  // Stores the question about medications or supplements.
   const [medicationQuestion, setMedicationQuestion] = useState("");
+  // Stores the medication-guidance response from the backend.
   const [medicationGuidance, setMedicationGuidance] = useState("");
+  // Shows when medication guidance is being generated.
   const [medicationGuidanceLoading, setMedicationGuidanceLoading] = useState(false);
+  // Stores the lifespan-estimator results returned by the backend.
   const [lifespanEstimate, setLifespanEstimate] = useState(null);
+  // Controls the loading indicator for lifespan calculations.
   const [lifespanLoading, setLifespanLoading] = useState(false);
+  // Stores personalized longevity insights generated by the backend.
   const [deepLongevityInsights, setDeepLongevityInsights] = useState([]);
+  // Tracks whether the deeper longevity request is still running.
   const [deepLongevityLoading, setDeepLongevityLoading] = useState(false);
+  // Stores the method used to generate the longevity insights.
   const [deepLongevityMethod, setDeepLongevityMethod] = useState("");
+  // Stores an error message if deeper longevity insights cannot be loaded.
   const [deepLongevityError, setDeepLongevityError] = useState("");
-  const [agingPhoto, setAgingPhoto] = useState("");
-  const [agingResult, setAgingResult] = useState("");
-  const [agingTarget, setAgingTarget] = useState(70);
-  const [agingLoading, setAgingLoading] = useState(false);
-  const [agingError, setAgingError] = useState("");
+  // Stores the curated personalized insight cards.
   const [insights, setInsights] = useState([]);
+  // Tracks the request that generates the Insights page cards.
   const [insightsLoading, setInsightsLoading] = useState(false);
+  // Stores an error message for the Insights page.
   const [insightsError, setInsightsError] = useState("");
+  // Records whether the insights were selected by rules or AI ranking.
   const [insightsMethod, setInsightsMethod] = useState("");
 
+  // On first render, restore the saved profile and split total height into feet and inches.
   useEffect(() => {
     const savedProfile = localStorage.getItem("userProfile");
     if (savedProfile) {
@@ -134,8 +184,10 @@ function App() {
     }
   }, []);
 
+  // Save the updated meal history whenever mealHistory changes.
   useEffect(() => { localStorage.setItem("mealHistory", JSON.stringify(mealHistory)); }, [mealHistory]);
 
+  // Validates the selected image and reads it with FileReader so it can be sent to the backend.
   const selectFoodPhoto = (event) => {
     const file = event.target.files?.[0];
     setFoodPhotoWarning(""); setFoodPhoto("");
@@ -144,18 +196,43 @@ function App() {
       setFoodPhotoWarning("Choose a JPG, PNG, or WebP photo under 5 MB."); return;
     }
     const reader = new FileReader();
-    reader.onload = () => setFoodPhoto(String(reader.result || ""));
+    // Resize large photos in the browser before sending them to Gemini.
+    reader.onload = () => {
+      const originalPhoto = String(reader.result || "");
+      const image = new Image();
+      image.onload = () => {
+        try {
+          const scale = Math.min(1, 1024 / Math.max(image.width, image.height));
+          const canvas = document.createElement("canvas");
+          canvas.width = Math.max(1, Math.round(image.width * scale));
+          canvas.height = Math.max(1, Math.round(image.height * scale));
+          const context = canvas.getContext("2d");
+          context.fillStyle = "white";
+          context.fillRect(0, 0, canvas.width, canvas.height);
+          context.drawImage(image, 0, 0, canvas.width, canvas.height);
+          const compressedPhoto = canvas.toDataURL("image/jpeg", 0.82);
+          setFoodPhoto(compressedPhoto.length < originalPhoto.length ? compressedPhoto : originalPhoto);
+        } catch {
+          setFoodPhoto(originalPhoto);
+        }
+      };
+      image.onerror = () => setFoodPhotoWarning("Could not decode that image.");
+      image.src = originalPhoto;
+    };
     reader.onerror = () => setFoodPhotoWarning("Could not read that image.");
     reader.readAsDataURL(file);
   };
+  // POSTs the image to the food-photo endpoint and uses the response to help fill the meal form.
   const analyzeFoodPhoto = async () => {
     if (!foodPhoto) return;
     setFoodPhotoLoading(true); setFoodPhotoWarning("");
     try {
+      // Send a JSON request to the local FastAPI server and wait for its response.
       const response = await fetch("http://127.0.0.1:8000/api/analyze-food-photo", {
         method: "POST", headers: {"Content-Type": "application/json"},
         body: JSON.stringify({photo: foodPhoto, portion_hint: mealDraft.portion}),
       });
+      // Convert the backend's JSON response into a JavaScript object.
       const data = await response.json();
       if (!response.ok) throw new Error(typeof data.detail === "string" ? data.detail : "Photo analysis failed.");
       const result = data.estimate;
@@ -171,6 +248,7 @@ function App() {
     finally { setFoodPhotoLoading(false); }
   };
 
+  // Creates or updates a logged meal and refreshes the meal-history state.
   const saveMeal = (event) => {
     event.preventDefault();
     if (!mealDraft.description.trim() || !mealDraft.date) return;
@@ -191,22 +269,29 @@ function App() {
     setEditingMealId(null); setMealDraft(blankMeal()); setFoodPhoto(""); setFoodPhotoWarning("");
     setMealNotice(editingMealId ? "Meal updated." : "Meal added to your history.");
   };
+  // Copies a saved meal into the editing form so its values can be changed.
   const editMeal = (item) => {
     setMealDraft({ ...item, calories: item.calories ?? "", protein: item.protein ?? "" });
     setEditingMealId(item.id); setMealNotice("");
   };
+  // Removes a logged meal from the saved history.
   const deleteMeal = (id) => {
     if (!window.confirm("Delete this meal from your history?")) return;
     setMealHistory(previous => previous.filter(item => item.id !== id));
     if (editingMealId === id) { setEditingMealId(null); setMealDraft(blankMeal()); }
     setMealNotice("Meal deleted.");
   };
+  // Filters meal history to entries logged for the current local date.
   const todayMeals = mealHistory.filter(item => item.date === todayLocal());
+  // Adds the calorie values for today's meals; missing values contribute zero to this display total.
   const todayMealCalories = todayMeals.reduce((sum, item) => sum + (Number(item.calories) || 0), 0);
+  // Adds the protein values for today's meals for the dashboard totals.
   const todayMealProtein = todayMeals.reduce((sum, item) => sum + (Number(item.protein) || 0), 0);
 
+  // Updates the profile field named by the input without replacing the other profile values.
   const handleChange = (e) => setFormData({ ...formData, [e.target.name]: e.target.value });
 
+  // Converts separate feet and inches inputs into the total height stored in the profile.
   const updateHeight = (feet, inches) => {
     setHeightFeet(feet);
     setHeightRemainderInches(inches);
@@ -216,6 +301,7 @@ function App() {
     }));
   };
 
+  // Adds or removes one equipment option from the user's selected equipment.
   const toggleEquipment = (equipment) => {
     const selected = formData.available_equipment.includes(equipment);
     setFormData({
@@ -226,6 +312,7 @@ function App() {
     });
   };
 
+  // Expands or collapses a group of equipment options.
   const toggleEquipmentCategory = (category) => {
     setOpenEquipmentCategories((previous) =>
       previous.includes(category)
@@ -234,6 +321,7 @@ function App() {
     );
   };
 
+  // Selects the equipment options belonging to one category.
   const selectCategory = (category) => {
     const items = equipmentCategories[category];
     setFormData((previous) => ({
@@ -242,6 +330,7 @@ function App() {
     }));
   };
 
+  // Removes the selected equipment options belonging to one category.
   const clearCategory = (category) => {
     const items = new Set(equipmentCategories[category]);
     setFormData((previous) => ({
@@ -250,12 +339,15 @@ function App() {
     }));
   };
 
+  // Removes all selected equipment choices.
   const clearAllEquipment = () =>
     setFormData((previous) => ({ ...previous, available_equipment: [] }));
 
+  // Adds all available equipment choices to the profile.
   const selectAllEquipment = () =>
     setFormData((previous) => ({ ...previous, available_equipment: [...equipmentOptions] }));
 
+  // Combines profile fields with logged nutrition totals into the object sent to API endpoints.
   const buildProfile = () => ({
     ...formData,
     meal_history: mealHistory.slice().sort((x,y) => y.date.localeCompare(x.date)).slice(0, 90),
@@ -276,19 +368,34 @@ function App() {
     a1c: formData.a1c === "" ? null : Number(formData.a1c),
   });
 
+  // Checks that the fields required for the main profile workflow are present.
   const profileIsComplete = () => formData.age && formData.sex && formData.height_inches &&
     formData.weight_lbs && formData.goal && formData.activity_level &&
     formData.exercise_experience && formData.workout_days_per_week;
 
+  // Health guidance needs basic measurements, not completed exercise or nutrition forms.
+  const healthProfileIsComplete = () => Number(formData.age) > 0 && Boolean(formData.sex) &&
+    Number(formData.height_inches) > 0 && Number(formData.weight_lbs) > 0;
+
+  // Preserve unknown workout frequency instead of converting an empty field to zero.
+  const buildHealthProfile = () => ({
+    ...buildProfile(),
+    workout_days_per_week: formData.workout_days_per_week === "" ? null : Number(formData.workout_days_per_week),
+  });
+
+  // Checks the profile fields needed to calculate nutrition targets.
   const nutritionProfileIsComplete = () => formData.age && formData.sex && formData.height_inches &&
     formData.weight_lbs && formData.goal && formData.activity_level;
 
+  // Saves the profile and sends it to the backend; displays the result to the user.
   const handleProfileSubmit = async (e) => {
     e.preventDefault();
     try {
+      // Send a JSON request to the local FastAPI server and wait for its response.
       const response = await fetch("http://127.0.0.1:8000/api/profile", {
         method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(buildProfile()),
       });
+      // Convert the backend's JSON response into a JavaScript object.
       const data = await response.json();
       if (response.ok) {
         localStorage.setItem("userProfile", JSON.stringify(formData));
@@ -304,6 +411,7 @@ function App() {
     }
   };
 
+  // Restores the initial profile values and clears related saved profile information.
   const resetProfile = () => {
     localStorage.removeItem("userProfile");
     setFormData({ ...emptyProfile, available_equipment: [...equipmentOptions] });
@@ -312,6 +420,7 @@ function App() {
     setNutritionTargets(null); setChatMessages([]); setInsights([]); setInsightsError(""); setProfileMessage("Profile reset.");
   };
 
+  // Requests calculated calorie and protein targets from the FastAPI backend.
   const getNutritionTargets = async () => {
     if (!nutritionProfileIsComplete()) {
       setNutritionTargets(null);
@@ -320,9 +429,11 @@ function App() {
     }
     setNutritionLoading(true); setProfileMessage("");
     try {
+      // Send a JSON request to the local FastAPI server and wait for its response.
       const response = await fetch("http://127.0.0.1:8000/api/nutrition-targets", {
         method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(buildProfile()),
       });
+      // Convert the backend's JSON response into a JavaScript object.
       const data = await response.json();
       if (response.ok) setNutritionTargets(data.targets);
       else { setNutritionTargets(null); setProfileMessage("There was a problem calculating nutrition targets."); }
@@ -331,6 +442,7 @@ function App() {
     } finally { setNutritionLoading(false); }
   };
 
+  // Sends the current chat question and profile to the AI Coach API, then adds the reply to chat history.
   const sendMessage = async (e) => {
     e.preventDefault();
     if (!profileIsComplete()) {
@@ -342,10 +454,12 @@ function App() {
     setChatMessages((p) => [...p, { role: "user", text: userMessage }]);
     setChatInput(""); setChatLoading(true);
     try {
+      // Send a JSON request to the local FastAPI server and wait for its response.
       const response = await fetch("http://127.0.0.1:8000/api/chat", {
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ message: userMessage, profile: buildProfile() }),
       });
+      // Convert the backend's JSON response into a JavaScript object.
       const data = await response.json();
       setChatMessages((p) => [...p, {
         role: "agent",
@@ -357,18 +471,21 @@ function App() {
     } finally { setChatLoading(false); }
   };
 
+  // Requests AI-generated longevity connections based on the user's profile.
   const generateDeepLongevityInsights = async () => {
     if (!nutritionProfileIsComplete()) return;
     setDeepLongevityLoading(true);
     setDeepLongevityError("");
     setDeepLongevityInsights([]);
     try {
+      // Send a JSON request to the local FastAPI server and wait for its response.
       const response = await fetch("http://127.0.0.1:8000/api/deep-longevity-insights", {
         method: "POST",
         headers: {"Content-Type": "application/json"},
         body: JSON.stringify({profile: buildProfile()}),
       });
       if (!response.ok) throw new Error("Could not generate deeper insights.");
+      // Convert the backend's JSON response into a JavaScript object.
       const data = await response.json();
       setDeepLongevityInsights(data.insights || []);
       setDeepLongevityMethod(data.method || "");
@@ -379,6 +496,7 @@ function App() {
     }
   };
 
+  // Sends the profile to the lifespan-estimate endpoint and stores the returned score and range.
   const calculateLifespanEstimate = async () => {
     if (!nutritionProfileIsComplete()) {
       setProfileMessage("Please complete your basic profile information before calculating a lifespan estimate.");
@@ -391,11 +509,13 @@ function App() {
     setProfileMessage("");
 
     try {
+      // Send a JSON request to the local FastAPI server and wait for its response.
       const response = await fetch("http://127.0.0.1:8000/api/lifespan-estimate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(buildProfile()),
       });
+      // Convert the backend's JSON response into a JavaScript object.
       const data = await response.json();
       if (response.ok) setLifespanEstimate(data.estimate);
       else setProfileMessage(data.detail || "There was a problem calculating the lifespan estimate.");
@@ -407,6 +527,7 @@ function App() {
     }
   };
 
+  // Sends either a health concern or test question to the matching backend guidance mode.
   const requestHealthGuidance = async (mode) => {
     const question = mode === "concern" ? healthConcern.trim() : healthTestQuestion.trim();
 
@@ -416,9 +537,9 @@ function App() {
       return;
     }
 
-    if (!profileIsComplete()) {
-      if (mode === "concern") setHealthConcernGuidance("Please complete your core profile before requesting personalized health guidance.");
-      else setHealthTestGuidance("Please complete your core profile before requesting personalized health guidance.");
+    if (!healthProfileIsComplete()) {
+      if (mode === "concern") setHealthConcernGuidance("Please enter your age, sex, height, and weight in Profile before requesting personalized health guidance.");
+      else setHealthTestGuidance("Please enter your age, sex, height, and weight in Profile before requesting personalized health guidance.");
       return;
     }
 
@@ -427,12 +548,14 @@ function App() {
     else setHealthTestGuidance("");
 
     try {
+      // Send a JSON request to the local FastAPI server and wait for its response.
       const response = await fetch("http://127.0.0.1:8000/api/health-guidance", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ mode, question, profile: buildProfile() }),
+        body: JSON.stringify({ mode, question, profile: buildHealthProfile() }),
       });
 
+      // Convert the backend's JSON response into a JavaScript object.
       const data = await response.json();
       const result = response.ok ? data.response : (data.detail || data.response || "There was a problem getting health guidance.");
       if (mode === "concern") setHealthConcernGuidance(result);
@@ -446,25 +569,28 @@ function App() {
     }
   };
 
+  // Requests guidance for the entered medication or supplement question.
   const requestMedicationGuidance = async () => {
     const question = medicationQuestion.trim();
     if (!question) {
       setMedicationGuidance("Please enter a question about an over-the-counter medication, vitamin, or supplement first.");
       return;
     }
-    if (!profileIsComplete()) {
-      setMedicationGuidance("Please complete your core profile before requesting personalized medication or supplement guidance.");
+    if (!healthProfileIsComplete()) {
+      setMedicationGuidance("Please enter your age, sex, height, and weight in Profile before requesting personalized medication or supplement guidance.");
       return;
     }
 
     setMedicationGuidanceLoading(true);
     setMedicationGuidance("");
     try {
+      // Send a JSON request to the local FastAPI server and wait for its response.
       const response = await fetch("http://127.0.0.1:8000/api/medication-guidance", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ question, profile: buildProfile() }),
+        body: JSON.stringify({ question, profile: buildHealthProfile() }),
       });
+      // Convert the backend's JSON response into a JavaScript object.
       const data = await response.json();
       setMedicationGuidance(response.ok ? data.response : (data.detail || data.response || "There was a problem getting medication or supplement guidance."));
     } catch (error) {
@@ -475,6 +601,7 @@ function App() {
     }
   };
 
+  // Requests the profile-based insight cards and stores the returned results.
   const discoverInsights = async () => {
     if (!nutritionProfileIsComplete()) {
       setInsightsError("Complete the basic Profile information first to discover personalized insights.");
@@ -483,11 +610,13 @@ function App() {
     setInsightsLoading(true);
     setInsightsError("");
     try {
+      // Send a JSON request to the local FastAPI server and wait for its response.
       const response = await fetch("http://127.0.0.1:8000/api/personalized-insights", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(buildProfile()),
       });
+      // Convert the backend's JSON response into a JavaScript object.
       const data = await response.json();
       if (!response.ok) throw new Error(data.detail || "Could not generate insights.");
       setInsights(data.insights || []);
@@ -499,26 +628,37 @@ function App() {
     }
   };
 
+  // Maps internal goal codes to readable labels displayed in the interface.
   const goalLabel = {
     lose_weight: "Lose Weight", maintain_weight: "Maintain Weight", gain_weight: "Gain Weight",
     build_muscle: "Build Muscle", improve_fitness: "Improve Fitness",
   }[formData.goal] || "Not set";
 
+  // Chooses the meal-history calorie total when meals exist, otherwise uses the manually entered total.
   const calorieLogged = todayMeals.length ? todayMealCalories : (Number(formData.actual_calories_today) || 0);
+  // Chooses the meal-history protein total when meals exist, otherwise uses the manually entered total.
   const proteinLogged = todayMeals.length ? todayMealProtein : (Number(formData.actual_protein_today) || 0);
+  // Gets the daily calorie target, defaulting to zero until the backend responds.
   const calorieTarget = nutritionTargets?.target_calories || 0;
+  // Gets the daily protein target, defaulting to zero until the backend responds.
   const proteinTarget = nutritionTargets?.protein_grams || 0;
+  // Gets the health-aware nutrition suggestions included with calculated targets.
   const healthNutrition = nutritionTargets?.health_nutrition || null;
+  // Converts logged calories into a percentage of the target, capped at 100 for the progress bar.
   const caloriePercent = calorieTarget ? Math.min(100, Math.round((calorieLogged / calorieTarget) * 100)) : 0;
+  // Converts logged protein into a percentage of the target, capped at 100 for the progress bar.
   const proteinPercent = proteinTarget ? Math.min(100, Math.round((proteinLogged / proteinTarget) * 100)) : 0;
 
+  // Changes the active page and scrolls to the top so the new page starts at its heading.
   const go = (page) => { setActivePage(page); window.scrollTo({ top: 0, behavior: "smooth" }); };
 
+  // Turns AI response text into paragraphs, headings, bold text, and bullet lists for display.
   const FormattedAIResponse = ({ text }) => {
     const lines = text.split("\n");
     const elements = [];
     let bullets = [];
 
+    // Finishes a pending group of bullet lines and adds the completed list to the rendered output.
     const flushBullets = () => {
       if (bullets.length) {
         elements.push(
@@ -530,6 +670,7 @@ function App() {
       }
     };
 
+    // Converts text surrounded by double asterisks into bold React elements.
     const formatInline = (value) => {
       const parts = value.split(/(\*\*.*?\*\*)/g);
       return parts.map((part, index) =>
@@ -561,6 +702,7 @@ function App() {
     return <div className="health-guidance-output">{elements}</div>;
   };
 
+  // Builds navigation buttons from navItems and highlights the currently selected page.
   const Navigation = ({ mobile = false }) => (
     <nav className={mobile ? "mobile-nav" : "nav"}>
       {navItems.map((item) => (
@@ -569,6 +711,7 @@ function App() {
     </nav>
   );
 
+  // Displays a page banner image, title, and overlay; hides the image if it fails to load.
   const PhotoBanner = ({ photo, title, description }) => (
     <div className="wellness-photo-banner">
       <img
@@ -585,6 +728,7 @@ function App() {
     </div>
   );
 
+  // Renders the overview page with the user's current information and progress.
   const Dashboard = () => (
     <>
       <section className="hero-card hero-card-photo">
@@ -634,6 +778,7 @@ function App() {
     </>
   );
 
+  // Renders editable profile information and its save/reset controls.
   const Profile = () => (
     <form onSubmit={handleProfileSubmit}>
       <div className="page-heading"><h3><span className="page-icon">👤</span>Your Profile</h3><p>Keep your information current so recommendations can be personalized.</p></div>
@@ -678,6 +823,7 @@ function App() {
     </form>
   );
 
+  // Renders the user's medical history and health-record input fields.
   const HealthRecords = () => (
     <>
       <div className="page-heading">
@@ -720,6 +866,7 @@ function App() {
     </>
   );
 
+  // Renders the health questions, test guidance, and medication/supplement guidance interface.
   const HealthGuidance = () => (
     <>
       <div className="page-heading">
@@ -727,7 +874,6 @@ function App() {
         <p>Explore health concerns, health tests and screening, and over-the-counter medication or supplement options.</p>
       </div>
       <PhotoBanner photo="photo-1505751172876-fa1923c5c528" title="Health Guidance" description="Healthcare" />
-
       <section className="card">
         <div className="card-header"><div><h4>🩺 Health Concerns</h4><p>Describe a symptom or concern and explore possible next steps.</p></div></div>
         <div className="field full">
@@ -736,7 +882,7 @@ function App() {
         </div>
         <div className="actions">
           <button type="button" className="btn btn-primary" disabled={healthGuidanceLoading} onClick={() => requestHealthGuidance("concern")}>
-            {healthGuidanceLoading ? "Exploring..." : "Explore Concern"}
+            {healthGuidanceLoading ? "Exploring..." : healthConcernGuidance ? "Regenerate Guidance" : "Explore Concern"}
           </button>
         </div>
         {healthConcernGuidance && (
@@ -758,7 +904,7 @@ function App() {
         </div>
         <div className="actions">
           <button type="button" className="btn btn-secondary" disabled={healthGuidanceLoading} onClick={() => requestHealthGuidance("test")}>
-            {healthGuidanceLoading ? "Exploring..." : "Explore Tests & Screening"}
+            {healthGuidanceLoading ? "Exploring..." : healthTestGuidance ? "Regenerate Guidance" : "Explore Tests & Screening"}
           </button>
         </div>
         {healthTestGuidance && (
@@ -780,7 +926,7 @@ function App() {
         </div>
         <div className="actions">
           <button type="button" className="btn btn-primary" disabled={medicationGuidanceLoading} onClick={requestMedicationGuidance}>
-            {medicationGuidanceLoading ? "Checking..." : "Get Recommendations"}
+            {medicationGuidanceLoading ? "Checking..." : medicationGuidance ? "Regenerate Recommendations" : "Get Recommendations"}
           </button>
         </div>
         {medicationGuidance && (
@@ -796,6 +942,7 @@ function App() {
     </>
   );
 
+  // Renders nutrition targets, food-photo analysis, and meal logging controls.
   const Nutrition = () => (
     <>
       <div className="page-heading"><h3><span className="page-icon">🥗</span>Nutrition</h3><p>Manage dietary preferences, daily tracking, and estimated nutrition targets.</p></div>
@@ -888,6 +1035,7 @@ function App() {
     </>
   );
 
+  // Renders workout preferences, training settings, and equipment selection.
   const Exercise = () => (
     <>
       <div className="page-heading"><h3><span className="page-icon">🏃</span>Exercise</h3><p>Set your experience, weekly schedule, and available equipment.</p></div>
@@ -1024,53 +1172,7 @@ function App() {
     </>
   );
 
-  const handleAgingPhoto = (event) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-    setAgingError("");
-    setAgingResult("");
-    if (!["image/jpeg", "image/png", "image/webp"].includes(file.type)) {
-      setAgingError("Choose a JPG, PNG, or WebP image.");
-      setAgingPhoto("");
-      return;
-    }
-    if (file.size > 8 * 1024 * 1024) {
-      setAgingError("Choose an image smaller than 8 MB.");
-      setAgingPhoto("");
-      return;
-    }
-    const reader = new FileReader();
-    reader.onload = () => setAgingPhoto(String(reader.result || ""));
-    reader.onerror = () => setAgingError("Could not read the photo. Please try another file.");
-    reader.readAsDataURL(file);
-  };
-
-  const generateAgedPhoto = async () => {
-    if (!agingPhoto || agingLoading) return;
-    if (formData.age && agingTarget <= Number(formData.age)) {
-      setAgingError("Choose a target age older than your current age.");
-      return;
-    }
-    setAgingLoading(true);
-    setAgingError("");
-    setAgingResult("");
-    try {
-      const response = await fetch("http://127.0.0.1:8000/api/face-aging", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ photo: agingPhoto, target_age: agingTarget, profile: buildProfile() }),
-      });
-      const result = await response.json();
-      if (!response.ok) throw new Error(result.detail || "Image generation failed.");
-      if (!result.image) throw new Error("No image was returned.");
-      setAgingResult(result.image);
-    } catch (error) {
-      setAgingError(error.message || "Could not generate an image.");
-    } finally {
-      setAgingLoading(false);
-    }
-  };
-
+  // Renders longevity factors, lifespan estimates, and deeper longevity insights.
   const Longevity = () => (
     <>
       <div className="page-heading">
@@ -1261,6 +1363,7 @@ function App() {
     </>
   );
 
+  // Renders the health and fitness provider/network information.
   const Network = () => {
     const networkData = {
       "Personal Trainer": [
@@ -1310,7 +1413,7 @@ function App() {
       <>
         <div className="page-heading">
           <h3><span className="page-icon">🤝</span>Network</h3>
-          <p>Explore a prototype network of professionals and services that can support your health, nutrition, and fitness goals.</p>
+          <p>Explore a network of professionals and services that can support your health, nutrition, and fitness goals.</p>
         </div>
       <PhotoBanner photo="photo-1497366811353-6870744d04b2" title="Network" description="Professional connections" />
 
@@ -1330,7 +1433,7 @@ function App() {
         {selectedNetwork && (
           <section className="card">
             <div className="card-header">
-              <div><h4>{selectedNetwork}</h4><p>Example prototype results. These are fictional and are not real providers or businesses.</p></div>
+              <div><h4>{selectedNetwork}</h4><p>Fictional sample providers and services.</p></div>
               <button type="button" className="btn btn-secondary" onClick={() => setSelectedNetwork(null)}>Close</button>
             </div>
             <div className="info-list">
@@ -1349,7 +1452,7 @@ function App() {
 
         {!selectedNetwork && (
           <section className="card">
-            <div className="card-header"><div><h4>Prototype Network</h4><p>Choose one of the categories above to see example results.</p></div></div>
+            <div className="card-header"><div><h4>Explore the Network</h4><p>Choose one of the categories above to see example results.</p></div></div>
             <p className="muted small">The current network uses fictional sample providers. A future version can connect to real provider and business data.</p>
           </section>
         )}
@@ -1357,6 +1460,7 @@ function App() {
     );
   };
 
+  // Renders curated, profile-based health and fitness insight cards.
   const Insights = () => (
     <>
       <div className="page-heading">
@@ -1408,6 +1512,7 @@ function App() {
     </>
   );
 
+  // Renders the chat interface and conversation with the AI Coach.
   const AICoach = () => (
     <>
       <div className="page-heading"><h3><span className="page-icon">✨</span>AI Coach</h3><p>Your profile is automatically included with each request for personalized responses.</p></div>
@@ -1443,6 +1548,7 @@ function App() {
     </>
   );
 
+  // Selects the short description displayed beneath the current page title.
   const pageDescription = {
     Dashboard: "Overview of your personalized health and fitness plan",
     Profile: "Personal details and health considerations",
@@ -1456,6 +1562,7 @@ function App() {
     "AI Coach": "Personalized exercise and nutrition conversation",
   }[activePage];
 
+  // Choose which page to display based on activePage; only one page is shown at a time.
   return (
     <div className="app-shell">
       <aside className="sidebar">
